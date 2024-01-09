@@ -1,0 +1,2681 @@
+---
+title: "Final Project"
+author: "Surendran"
+date: '2022-06-28'
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(mice)
+library(lattice)
+library(dplyr)
+library(magrittr)
+library(tidyverse)
+library(lme4)
+library(broom)
+library(VIM)
+library(targets)
+library(Metrics)
+library(jtools)
+library(zoo)
+library(imputeTS)
+library(xts)
+setwd("C:/Users/suren/OneDrive - Robert Gordon University/Documents/R/RGU/C- Data visualisation & analysis/session  12 - TESTING")
+```
+
+```{r,warning=T, include=False}
+
+if (!require('ggplot2')) install.packages(' ggplot2', dependencies = T);
+if (!require('mice')) install.packages(' mice', dependencies = T);
+if (!require('lattice')) install.packages(' lattice', dependencies = T);
+if (!require('dplyr')) install.packages(' dplyr', dependencies = T);
+if (!require('magrittr')) install.packages(' magrittr', dependencies = T);
+if (!require('tidyverse')) install.packages(' tidyverse', dependencies = T);
+if (!require('lme4')) install.packages(' lme4', dependencies = T);
+if (!require('broom')) install.packages(' broom', dependencies = T);
+if (!require('VIM')) install.packages(' VIM', dependencies = T);
+if (!require('targets')) install.packages(' targets', dependencies = T);
+if (!require('Metrics')) install.packages(' Metrics', dependencies = T);
+if (!require('jtools')) install.packages(' jtools', dependencies = T);
+if (!require('zoo')) install.packages(' zoo', dependencies = T);
+if (!require('imputeTS')) install.packages(' imputeTS', dependencies = T);
+if (!require('xts')) install.packages(' xts', dependencies = T);
+```
+
+                                                ORIGNAL DATASET
+
+```{r}
+dataset <- read.csv("dataset.csv",  header= T , stringsAsFactors = T )
+summary(dataset)
+head(dataset, 20)
+```
+
+# Plotting either missing dataset OR imputed-dataset by compiling each function
+
+```{r}
+library(VIM)
+aggr_plot <- aggr(dataset1, col=c('green','red'),
+                  numbers=TRUE,
+                  sortVars=TRUE,
+                  labels=names(dataset1),
+                  cex.axis=.8,
+                  gap=2,
+                  xlab=c("Histogram of Missing or imputed data", "Pattern"))
+                  
+```
+
+                                                MODIFIED DATASET
+                                                
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+*************************IMPUTATION METHODS*************************************
+
+
+# MEAN IMPUTATION
+
+```{r}
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+```
+
+# MEDIAN IMPUTATION
+
+```{r}
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+```
+
+# COMBINING ( LOCF + NOCB = IMPUTATION)
+
+```{r}
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+```
+
+# LINEAR INTERPOLATION IMPUTATION
+
+```{r}
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+
+dataset1 <- t(dataset1)
+
+dataset1 <- na.interpolation(dataset1, option = "linear")
+
+dataset1 <- t(dataset1)
+
+print(dataset1)
+```
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+# Plotting either missing dataset or imputed-dataset before or after imputation
+
+```{r}
+library(VIM)
+aggr_plot <- aggr(dataset1, col=c('green','red'),
+                  numbers=TRUE,
+                  sortVars=TRUE,
+                  labels=names(dataset1),
+                  cex.axis=.8,
+                  gap=2,
+                  xlab=c("Histogram of Missing or imputed data", "Pattern"))
+                  
+```
+
+********************** EVALUATION OF TECHNIQUES **************
+
+# CHOOSING 20 RANDOM EXISTING VALUES FOR EVALUATION PURPOSE
+
+[1,1] [2,1] [3,2] [4,3] [5,5] [6,5] [7,1] [8,2] [9,3] [10,2]
+
+[11,5] [12,1] [13,1] [14,1] [15,4] [16,5] [17,1] [18,2] [19,4] [20,1]
+
+                                                MODIFIED DATASET
+                                                
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+```{r}
+differences <- c()
+print(differences)
+```
+
+# EVALUATION for [1,1]
+
+```{r}
+original_value <- dataset1[1,1]
+
+print(original_value)
+
+dataset1[1,1] <- NA
+```
+
+```{r}
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+```
+
+```{r}
+imputed_value <- dataset1[1,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+
+
+
+
+# EVALUATION for [1,1]
+
+```{r}
+original_value <- dataset1[1,1]
+
+print(original_value)
+
+dataset1[1,1] <- NA
+
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[1,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [2,1]
+
+```{r}
+original_value <- dataset1[2,1]
+
+print(original_value)
+
+dataset1[2,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[2,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+
+
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+
+
+
+# EVALUATION for [3,2]
+
+```{r}
+original_value <- dataset1[3,2]
+
+print(original_value)
+
+dataset1[3,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[3,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [4,3]
+
+```{r}
+original_value <- dataset1[4,3]
+
+print(original_value)
+
+dataset1[4,3] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[4,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [5,5]
+
+```{r}
+original_value <- dataset1[5,5]
+
+print(original_value)
+
+dataset1[5,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[5,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [6,5]
+
+```{r}
+original_value <- dataset1[6,5]
+
+print(original_value)
+
+dataset1[6,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[6,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [7,1]
+
+```{r}
+original_value <- dataset1[7,1]
+
+print(original_value)
+
+dataset1[7,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[7,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [8,2]
+
+```{r}
+original_value <- dataset1[8,2]
+
+print(original_value)
+
+dataset1[8,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[8,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [9,3]
+
+```{r}
+original_value <- dataset1[9,3]
+
+print(original_value)
+
+dataset1[9,3] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[9,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [10,2]
+
+```{r}
+original_value <- dataset1[10,2]
+
+print(original_value)
+
+dataset1[10,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[10,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [11,5]
+
+```{r}
+original_value <- dataset1[11,5]
+
+print(original_value)
+
+dataset1[11,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[11,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [12,1]
+
+```{r}
+original_value <- dataset1[12,1]
+
+print(original_value)
+
+dataset1[12,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[12,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [13,1]
+
+```{r}
+original_value <- dataset1[13,1]
+
+print(original_value)
+
+dataset1[13,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[13,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [14,1]
+
+```{r}
+original_value <- dataset1[14,1]
+
+print(original_value)
+
+dataset1[14,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[14,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [15,4]
+
+```{r}
+original_value <- dataset1[15,4]
+
+print(original_value)
+
+dataset1[15,4] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[15,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [16,5]
+
+```{r}
+original_value <- dataset1[16,5]
+
+print(original_value)
+
+dataset1[16,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[16,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [17,1]
+
+```{r}
+original_value <- dataset1[17,1]
+
+print(original_value)
+
+dataset1[17,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[17,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [18,2]
+
+```{r}
+original_value <- dataset1[18,2]
+
+print(original_value)
+
+dataset1[18,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[18,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [19,4]
+
+```{r}
+original_value <- dataset1[19,4]
+
+print(original_value)
+
+dataset1[19,4] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[19,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [20,1]
+
+```{r}
+original_value <- dataset1[20,1]
+
+print(original_value)
+
+dataset1[20,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[20,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+
+# FINDING OVERALL MEAN FOR ALL OF THE ABOVE DIFFERENCES (MEAN IMPUTATION)
+
+```{r}
+mean(differences)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# MEDIAN imputation totally
+
+```{r}
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+```
+
+                                               DATASET
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+```{r}
+differences <- c()
+print(differences)
+```
+
+# EVALUATION for [1,1]
+
+```{r}
+original_value <- dataset1[1,1]
+
+print(original_value)
+
+dataset1[1,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[1,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [2,1]
+
+```{r}
+original_value <- dataset1[2,1]
+
+print(original_value)
+
+dataset1[2,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[2,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [3,2]
+
+```{r}
+original_value <- dataset1[3,2]
+
+print(original_value)
+
+dataset1[3,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[3,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [4,3]
+
+```{r}
+original_value <- dataset1[4,3]
+
+print(original_value)
+
+dataset1[4,3] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[4,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [5,5]
+
+```{r}
+original_value <- dataset1[5,5]
+
+print(original_value)
+
+dataset1[5,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+imputed_value <- dataset1[5,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [6,5]
+
+```{r}
+original_value <- dataset1[6,5]
+
+print(original_value)
+
+dataset1[6,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[6,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [7,1]
+
+```{r}
+original_value <- dataset1[7,1]
+
+print(original_value)
+
+dataset1[7,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[7,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [8,2]
+
+```{r}
+original_value <- dataset1[8,2]
+
+print(original_value)
+
+dataset1[8,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[8,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [9,3]
+
+```{r}
+original_value <- dataset1[9,3]
+
+print(original_value)
+
+dataset1[9,3] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+imputed_value <- dataset1[9,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [10,2]
+
+```{r}
+original_value <- dataset1[10,2]
+
+print(original_value)
+
+dataset1[10,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[10,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [11,5]
+
+```{r}
+original_value <- dataset1[11,5]
+
+print(original_value)
+
+dataset1[11,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[11,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [12,1]
+
+```{r}
+original_value <- dataset1[12,1]
+
+print(original_value)
+
+dataset1[12,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[12,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [13,1]
+
+```{r}
+original_value <- dataset1[13,1]
+
+print(original_value)
+
+dataset1[13,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[13,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [14,1]
+
+```{r}
+original_value <- dataset1[14,1]
+
+print(original_value)
+
+dataset1[14,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[14,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [15,4]
+
+```{r}
+original_value <- dataset1[15,4]
+
+print(original_value)
+
+dataset1[15,4] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[15,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [16,5]
+
+```{r}
+original_value <- dataset1[16,5]
+
+print(original_value)
+
+dataset1[16,5] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[16,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [17,1]
+
+```{r}
+original_value <- dataset1[17,1]
+
+print(original_value)
+
+dataset1[17,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[17,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [18,2]
+
+```{r}
+original_value <- dataset1[18,2]
+
+print(original_value)
+
+dataset1[18,2] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[18,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [19,4]
+
+```{r}
+original_value <- dataset1[19,4]
+
+print(original_value)
+
+dataset1[19,4] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[19,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [20,1]
+
+```{r}
+original_value <- dataset1[20,1]
+
+print(original_value)
+
+dataset1[20,1] <- NA
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- median(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[20,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# FINDING OVERALL MEAN FOR ALL OF THE ABOVE DIFFERENCES (MEDIAN IMPUTATION)
+
+```{r}
+mean(differences)
+```
+
+
+
+
+
+
+
+
+
+
+
+# LAST OBSERVATION CARRIED FORWARD ( LOCF - from left to right)
+
+```{r}
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf0)))
+```
+
+# NEXT OBSERVATION CARRIED BACKWARD ( NOCB - from right to left)
+
+```{r}
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf0,fromLast = TRUE)))
+```
+
+# COMBINING ( LOCF + NOCB )
+
+```{r}
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+```
+
+                                               DATASET
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+```{r}
+differences <- c()
+print(differences)
+```
+
+# EVALUATION for [1,1]
+
+```{r}
+original_value <- dataset1[1,1]
+
+print(original_value)
+
+dataset1[1,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[1,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [2,1]
+
+```{r}
+original_value <- dataset1[2,1]
+
+print(original_value)
+
+dataset1[2,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[2,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [3,2]
+
+```{r}
+original_value <- dataset1[3,2]
+
+print(original_value)
+
+dataset1[3,2] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[3,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [4,3]
+
+```{r}
+original_value <- dataset1[4,3]
+
+print(original_value)
+
+dataset1[4,3] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[4,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [5,5]
+
+```{r}
+original_value <- dataset1[5,5]
+
+print(original_value)
+
+dataset1[5,5] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[5,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [6,5]
+
+```{r}
+original_value <- dataset1[6,5]
+
+print(original_value)
+
+dataset1[6,5] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[6,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [7,1]
+
+```{r}
+original_value <- dataset1[7,1]
+
+print(original_value)
+
+dataset1[7,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[7,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [8,2]
+
+```{r}
+original_value <- dataset1[8,2]
+
+print(original_value)
+
+dataset1[8,2] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[8,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [9,3]
+
+```{r}
+original_value <- dataset1[9,3]
+
+print(original_value)
+
+dataset1[9,3] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+imputed_value <- dataset1[9,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [10,2]
+
+```{r}
+original_value <- dataset1[10,2]
+
+print(original_value)
+
+dataset1[10,2] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+imputed_value <- dataset1[10,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [11,5]
+
+```{r}
+original_value <- dataset1[11,5]
+
+print(original_value)
+
+dataset1[11,5] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[11,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [12,1]
+
+```{r}
+original_value <- dataset1[12,1]
+
+print(original_value)
+
+dataset1[12,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[12,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [13,1]
+
+```{r}
+original_value <- dataset1[13,1]
+
+print(original_value)
+
+dataset1[13,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[13,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [14,1]
+
+```{r}
+original_value <- dataset1[14,1]
+
+print(original_value)
+
+dataset1[14,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[14,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [15,4]
+
+```{r}
+original_value <- dataset1[15,4]
+
+print(original_value)
+
+dataset1[15,4] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[15,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [16,5]
+
+```{r}
+original_value <- dataset1[16,5]
+
+print(original_value)
+
+dataset1[16,5] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[16,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [17,1]
+
+```{r}
+original_value <- dataset1[17,1]
+
+print(original_value)
+
+dataset1[17,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[17,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [18,2]
+
+```{r}
+original_value <- dataset1[18,2]
+
+print(original_value)
+
+dataset1[18,2] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[18,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [19,4]
+
+```{r}
+original_value <- dataset1[19,4]
+
+print(original_value)
+
+dataset1[19,4] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[19,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [20,1]
+
+```{r}
+original_value <- dataset1[20,1]
+
+print(original_value)
+
+dataset1[20,1] <- NA
+
+
+dataset1 <- data.frame(t(apply(dataset1, 1, na.locf)))
+
+
+
+imputed_value <- dataset1[20,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# FINDING OVERALL MEAN FOR ALL OF THE ABOVE DIFFERENCES( LOCF + NOCB IMPUTATION)
+
+```{r}
+mean(differences)
+```
+
+
+
+
+
+
+
+
+# LINEAR INTERPOLATION IMPUTATION
+
+```{r}
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+
+dataset1 <- t(dataset1)
+
+dataset1 <- na.interpolation(dataset1, option = "linear")
+
+dataset1 <- t(dataset1)
+
+print(dataset1)
+```
+
+                                               DATASET
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+```{r}
+differences <- c()
+print(differences)
+```
+
+# EVALUATION for [1,1]
+
+```{r}
+original_value <- dataset1[1,1]
+
+print(original_value)
+
+dataset1[1,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[1,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [2,1]
+
+```{r}
+original_value <- dataset1[2,1]
+print(original_value)
+
+dataset1[2,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[2,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [3,2]
+
+```{r}
+original_value <- dataset1[3,2]
+
+print(original_value)
+
+dataset1[3,2] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[3,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [4,3]
+
+```{r}
+original_value <- dataset1[4,3]
+
+print(original_value)
+
+dataset1[4,3] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[4,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [5,5]
+
+```{r}
+original_value <- dataset1[5,5]
+
+print(original_value)
+
+dataset1[5,5] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[5,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [6,5]
+
+```{r}
+original_value <- dataset1[6,5]
+
+print(original_value)
+
+dataset1[6,5] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[6,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [7,1]
+
+```{r}
+original_value <- dataset1[7,1]
+
+print(original_value)
+
+dataset1[7,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[7,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [8,2]
+
+```{r}
+original_value <- dataset1[8,2]
+
+print(original_value)
+
+dataset1[8,2] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[8,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [9,3]
+
+```{r}
+original_value <- dataset1[9,3]
+
+print(original_value)
+
+dataset1[9,3] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[9,3]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [10,2]
+
+```{r}
+original_value <- dataset1[10,2]
+
+print(original_value)
+
+dataset1[10,2] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[10,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [11,5]
+
+```{r}
+original_value <- dataset1[11,5]
+
+print(original_value)
+
+dataset1[11,5] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[11,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [12,1]
+
+```{r}
+original_value <- dataset1[12,1]
+
+print(original_value)
+
+dataset1[12,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[12,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [13,1]
+
+```{r}
+original_value <- dataset1[13,1]
+
+print(original_value)
+
+dataset1[13,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[13,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [14,1]
+
+```{r}
+original_value <- dataset1[14,1]
+
+print(original_value)
+
+dataset1[14,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[14,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [15,4]
+
+```{r}
+original_value <- dataset1[15,4]
+
+print(original_value)
+
+dataset1[15,4] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[15,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [16,5]
+
+```{r}
+original_value <- dataset1[16,5]
+
+print(original_value)
+
+dataset1[16,5] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[16,5]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [17,1]
+
+```{r}
+original_value <- dataset1[17,1]
+
+print(original_value)
+
+dataset1[17,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[17,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [18,2]
+
+```{r}
+original_value <- dataset1[18,2]
+
+print(original_value)
+
+dataset1[18,2] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[18,2]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+# EVALUATION for [19,4]
+
+```{r}
+original_value <- dataset1[19,4]
+
+print(original_value)
+
+dataset1[19,4] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[19,4]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+```
+
+# EVALUATION for [20,1]
+
+```{r}
+original_value <- dataset1[20,1]
+
+print(original_value)
+
+dataset1[20,1] <- NA
+
+
+library(imputeTS)
+dataset1 <- zoo(dataset1)
+dataset1 <- t(dataset1)
+dataset1 <- na.interpolation(dataset1, option = "linear")
+dataset1 <- t(dataset1)
+print(dataset1)
+
+
+imputed_value <- dataset1[20,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+
+
+# FINDING OVERALL MEAN FOR ALL OF THE ABOVE DIFFERENCES (LINEAR INTERPOLATION)
+
+```{r}
+mean(differences)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# LINEAR INTERPOLATION MANUAL DISPLAY INSTEAD OF AUTOMATIC-FLLING
+
+```{r}
+imputeTS::na_interpolation(dataset1)
+```
+
+# 06/07/2022
+
+# TO REMOVE COMPLETE ROWS IN SPECIFIC ( below code deletes row# 2 & 4 from dataset1 )
+
+```{r}
+dataset1 <- slice(dataset1, -c(2, 4))
+```
+
+# TO REMOVE SPECIFIC COLUMNS ( below code deletes column# 1 & 3 from dataset1 )
+
+```{r}
+dataset1$Year2000 <- NULL
+dataset1$Year2001 <- NULL
+```
+
+```{r}
+dataset1[ 3,2] <- NA
+```
+
+ORIGNAL VALUE FROM 11TH ROW & 20TH COLUMN = 16.0150779
+
+Mean = 17.5886053 , Median = 16.8453771 , LOCF = 15.4067261 , Linear
+interpolation = 13.9530922
+
+diff = 1.57(SECOND) , = 0.83 , = 0.61 , = 2.06 (LAST)
+
+                                               DATASET
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+                                                ORIGNAL DATASET
+
+```{r}
+dataset <- read.csv("dataset.csv",  header= T , stringsAsFactors = T )
+summary(dataset)
+head(dataset, 20)
+```
+
+# OBSERVATION CARRIED BACKWARD (from down to up)
+
+```{r}
+dataset = lapply(dataset, zoo::na.locf, fromLast = TRUE)
+```
+
+------------------------------------------------------------------------
+
+```{r}
+differences <- c()
+print(differences)
+```
+
+```{r}
+
+original_value <- dataset1[1,1]
+print(original_value)
+
+original_value <- dataset1[2,1]
+print(original_value)
+
+dataset1[1,1] <- NA
+dataset1[2,1] <- NA
+
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+imputed_value <- dataset1[1,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+
+imputed_value <- dataset1[2,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+differences <- append(differences, difference)
+print(differences)
+```
+
+                                              ***NEW***
+
+# MEAN imputation totally
+
+```{r}
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+```
+
+```{r}
+differences <- c()
+print(differences)
+```
+
+```{r}
+dataset1 <- read.csv("dataset1.csv",  header= T , stringsAsFactors = T )
+summary(dataset1)
+head(dataset1, 20)
+```
+
+print(iris)
+
+my_list \<- list(c(1,2),c(2,3),c(3,4)) for (my_item in my_list) { row
+\<- my_item[1] col \<- my_item[2] print(iris[row, col]) }
+
+# EVALUATION for [1,1]
+
+```{r}
+original_value <- dataset1[1,1]
+
+print(original_value)
+
+dataset1[1,1] <- NA
+
+
+
+for(i in 1:nrow(dataset1)) 
+  {
+  dataset1[i, ][is.na(dataset1[i, ])] <- mean(as.numeric(dataset1[i, ]), na.rm = TRUE)
+}
+
+
+imputed_value <- dataset1[1,1]
+print(imputed_value)
+
+difference = abs(original_value - imputed_value)
+print(difference)
+
+
+differences <- append(differences, difference)
+print(differences)
+```
